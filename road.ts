@@ -11,7 +11,14 @@ import {
   createResponse,
 } from "./utils.ts";
 import { State } from "./state.ts";
-import { instanceOfQueryFormat, QueryFormat } from "./query.ts";
+import { instanceOfMessageFormat, MessageFormat } from "./message.ts";
+
+export interface RoadParams {
+  portWS: number;
+  portHTTP: number;
+  state: State;
+  models: any[]
+}
 
 type ConnectionTypeRequest = { socket: WebSocket; params?: any };
 
@@ -20,10 +27,10 @@ export class Road implements AsyncIterable<ConnectionTypeRequest> {
   private state: State;
   private models: any[];
 
-  constructor(portWS: number, portHTTP: number, state: State, models: any[]) {
-    this.ws = new WS(portWS);
-    this.state = state;
-    this.models = models;
+  constructor(params: RoadParams) {
+    this.ws = new WS(params.portWS);
+    this.state = params.state;
+    this.models = params.models;
   }
 
   public async *initializeEvents(): AsyncIterableIterator<
@@ -47,7 +54,7 @@ export class Road implements AsyncIterable<ConnectionTypeRequest> {
             });
             await socket.send(response);
           }
-          this.validQueryFormat(json, socket);
+          this.validMessageFormat(json, socket);
         } else if (event instanceof Uint8Array) {
           // binary message
           console.log("ws:Binary", event);
@@ -93,29 +100,29 @@ export class Road implements AsyncIterable<ConnectionTypeRequest> {
    * @returns json
    *
    */
-  private async validQueryFormat(json: any, socket: WebSocket) {
-    if (!instanceOfQueryFormat(json)) {
+  private async validMessageFormat(json: any, socket: WebSocket) {
+    if (!instanceOfMessageFormat(json)) {
       const response = createResponse({
         status: "failed",
         message: "the data has no query format",
       });
       await socket.send(response);
     }
-    this.findAndExecuteQuery(json, socket);
+    this.findAndExecuteMessage(json, socket);
   }
 
-  private async findAndExecuteQuery(query: QueryFormat, socket: WebSocket) {
+  private async findAndExecuteMessage(message: MessageFormat, socket: WebSocket) {
     for (const model of this.models) {
       if (
-        typeof new model()[query.query] === "function" &&
-        model.prototype.__name === query.modelName
+        typeof new model()[message.messageName] === "function" &&
+        model.prototype.__name === message.modelName
       ) {
         const m = new model();
-        const data = await m.say.apply(m, query.parameters);
+        const data = await m.say.apply(m, message.parameters);
         const response = createResponse({
           status: "success",
           data: data,
-          queryId: query.queryId,
+          messageId: message.messageId,
         });
         await socket.send(response);
       }

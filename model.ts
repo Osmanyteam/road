@@ -1,6 +1,6 @@
 import { Connection } from "./connection.ts";
 
-const nameReg = /^[_]{0,2}([a-z]{3,}[0-9]{0,6})/;
+export const nameReg = /^[_]{0,2}([a-z]{3,}[0-9]{0,6})/;
 
 export type definitionModel = {
   connection: Connection;

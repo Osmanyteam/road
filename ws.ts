@@ -1,8 +1,6 @@
 import { serve, Server } from "https://deno.land/std/http/server.ts";
 import {
   acceptWebSocket,
-  isWebSocketCloseEvent,
-  isWebSocketPingEvent,
   WebSocketEvent,
   WebSocket,
 } from "https://deno.land/std/ws/mod.ts";
@@ -14,20 +12,6 @@ export class WS {
   constructor(port: number) {
     this.port = port;
     this.serve = serve({ port: this.port });
-  }
-
-  public onEvent = (ev: WebSocketEvent, socket: WebSocket) => {
-  };
-
-  public async __connect(socket: WebSocket, params?: any): Promise<Boolean> {
-    return true;
-  }
-
-  private async onConnect(socket: WebSocket, params?: any) {
-    const acceptConnection = await this.__connect(socket, params);
-    if (acceptConnection === false) {
-      await socket.close(505, "not allowed");
-    }
   }
 
   public async *onConnection(): AsyncIterableIterator<

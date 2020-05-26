@@ -3,7 +3,7 @@ import { State } from "../state.ts";
 import { Model } from "../model.ts";
 import { definition } from "../definition.ts";
 import { Connection } from "../connection.ts";
-import { Query } from "../query.ts";
+import { Message } from "../message.ts";
 
 // create state for app
 class StateApp extends State {
@@ -39,8 +39,8 @@ class User {
   })
   name: string = "";
 
-  @Query({
-    queryName: "say",
+  @Message({
+    messageName: "say hi to",
     onlyAccess: [],
   })
   say(text: string) {
@@ -49,7 +49,12 @@ class User {
   }
 }
 
-const app = new Road(3000, 3001, state, [User]);
+const app = new Road({
+  portWS: 3000,
+  portHTTP: 3001,
+  state: state,
+  models: [User]
+});
 
 for await (const { socket, params } of app) {
   if (!params) {

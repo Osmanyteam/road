@@ -12,7 +12,7 @@ export type ResponseType = {
     status: "pending" | "success" | "failed";
     message?: string;
     data?:any;
-    queryId?:number;
+    messageId?:number;
   };
 
 export function createResponse(data:ResponseType){
