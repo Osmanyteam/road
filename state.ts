@@ -1,5 +1,5 @@
 import { Model } from "./model.ts";
-import { definition } from "./definition.ts";
+import { Definition } from "./definition.ts";
 import { Connection } from "./connection.ts";
 
 
@@ -9,7 +9,7 @@ import { Connection } from "./connection.ts";
   name: "__state",
 })
 export class State {
-  @definition({
+  @Definition({
     name: "id",
     alias: "id_states",
     description: "id for get states in app",

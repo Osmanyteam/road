@@ -12,6 +12,7 @@ import {
 } from "./utils.ts";
 import { State } from "./state.ts";
 import { instanceOfMessageFormat, MessageFormat } from "./message.ts";
+import { getVersionStableLast } from './version.ts';
 
 export interface RoadParams {
   portWS: number;
@@ -54,7 +55,13 @@ export class Road implements AsyncIterable<ConnectionTypeRequest> {
             });
             await socket.send(response);
           }
-          this.validMessageFormat(json, socket);
+          // for default array is accept
+          // so is better that always like array
+          if (Object.prototype.toString.call(json) !== '[object Array]') {
+            this.validMessageFormatAndExecute([json], socket);
+          } else {
+            this.validMessageFormatAndExecute(json, socket);
+          }
         } else if (event instanceof Uint8Array) {
           // binary message
           console.log("ws:Binary", event);
@@ -100,33 +107,49 @@ export class Road implements AsyncIterable<ConnectionTypeRequest> {
    * @returns json
    *
    */
-  private async validMessageFormat(json: any, socket: WebSocket) {
-    if (!instanceOfMessageFormat(json)) {
-      const response = createResponse({
-        status: "failed",
-        message: "the data has no query format",
-      });
-      await socket.send(response);
+  private async validMessageFormatAndExecute(json: any[], socket: WebSocket) {
+    const responses: string[] = [];
+    for (const js of json) {
+      // if no has version, to assign automatic
+      if (!js['version']) {
+        js['version'] = getVersionStableLast();
+      }
+      if (!instanceOfMessageFormat(js)) {
+        const response = createResponse({
+          status: "failed",
+          message: "the data has no message format",
+        });
+        responses.push(response);
+      } else {
+        const response = await this.findAndExecuteMessage(js, socket);
+        responses.push(response);
+      }
     }
-    this.findAndExecuteMessage(json, socket);
+    const rs = responses.length === 1 ? responses[0] : JSON.stringify(responses);
+    await socket.send(rs);
   }
 
-  private async findAndExecuteMessage(message: MessageFormat, socket: WebSocket) {
+  private async findAndExecuteMessage(message: MessageFormat, socket: WebSocket): Promise<string> {
     for (const model of this.models) {
       if (
         typeof new model()[message.messageName] === "function" &&
         model.prototype.__name === message.modelName
       ) {
+        // this verify the roles have access for to execute the method
         const m = new model();
-        const data = await m.say.apply(m, message.parameters);
-        const response = createResponse({
+        const data = await m[message.messageName].apply(m, message.parameters);
+        return createResponse({
           status: "success",
           data: data,
           messageId: message.messageId,
         });
-        await socket.send(response);
       }
     }
+
+    return createResponse({
+      status: 'failed',
+      message: 'model or method not found'
+    });
   }
 
   [Symbol.asyncIterator](): AsyncIterator<ConnectionTypeRequest> {

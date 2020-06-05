@@ -1,7 +1,8 @@
 import { State } from "./state.ts";
 
 function isObject(obj: any) {
-  return Object.prototype.toString.call(obj) === "[object Object]";
+  return Object.prototype.toString.call(obj) === "[object Object]" ||
+  Object.prototype.toString.call(obj) === "[object Array]";
 }
 
 function validParam(param: any): boolean {
@@ -39,7 +40,6 @@ function validParam(param: any): boolean {
 }
 
 export interface MessageFormat {
-  state: State;
   modelName: string;
   messageName: string;
   messageId: number;
@@ -54,7 +54,7 @@ export function instanceOfMessageFormat(object: any): object is MessageFormat {
     { name: "state", type: Object() },
     { name: "messageName", type: String() },
     { name: "dateTime", type: String() },
-    { name: "MessageId", type: Number() },
+    { name: "messageId", type: Number() },
     { name: "version", type: String() },
   ];
   let valid = true;

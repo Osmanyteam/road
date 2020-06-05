@@ -5,7 +5,7 @@ export type DefinitionProperty = {
   onlyAccess?: any[];
 };
 
-export function definition(def: DefinitionProperty) {
+export function Definition(def: DefinitionProperty) {
   return function (target: any, property: any) {
       // console.log(target, property);
   };
